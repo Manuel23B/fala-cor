@@ -1,0 +1,7 @@
+{
+  "name": "Fala Coração Assistente - Narrador IA Angolano",
+  "description": "Um assistente de geração de texto e áudio de alta fidelidade especializado em narrações angolanas humanas e emocionais.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
