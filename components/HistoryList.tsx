@@ -1,25 +1,12 @@
 
 import React from 'react';
-import { HistoryItem, VoiceType } from '../types';
+import { HistoryItem, VoiceType, VoiceLabels } from '../types';
 
 interface HistoryListProps {
   items: HistoryItem[];
   onDelete: (id: string) => void;
   onLoad: (item: HistoryItem) => void;
 }
-
-const voiceLabels: Record<string, string> = {
-  charon: 'Charon',
-  fenrir: 'Fenrir',
-  orus: 'Orus',
-  enceladus: 'Enceladus',
-  zephyr: 'Zephyr',
-  aoede: 'Aoede',
-  leda: 'Leda',
-  kore: 'Kore',
-  puck: 'Puck',
-  cloned: 'Voz Clonada',
-};
 
 const HistoryList: React.FC<HistoryListProps> = ({ items, onDelete, onLoad }) => {
   if (items.length === 0) return null;
@@ -74,7 +61,7 @@ const HistoryList: React.FC<HistoryListProps> = ({ items, onDelete, onLoad }) =>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${item.voice === VoiceType.Cloned ? 'bg-green-500 animate-pulse' : 'bg-rose-600'}`}></div>
                   <span className={`text-[11px] font-bold ${item.voice === VoiceType.Cloned ? 'text-green-600' : 'text-slate-500'}`}>
-                    {voiceLabels[item.voice] || item.voice}
+                    {VoiceLabels[item.voice] || item.voice}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

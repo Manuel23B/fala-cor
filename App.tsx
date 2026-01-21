@@ -5,7 +5,7 @@ import Footer from './components/Footer';
 import GeneratorForm from './components/GeneratorForm';
 import ResultDisplay from './components/ResultDisplay';
 import HistoryList from './components/HistoryList';
-import { GenerationRequest, GenerationResponse, GenerationMode, HistoryItem } from './types';
+import { GenerationRequest, GenerationResponse, GenerationMode, HistoryItem, VoiceLabels } from './types';
 import { generateText, generateSpeech } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -43,7 +43,17 @@ const App: React.FC = () => {
       );
       
       const audioUrl = URL.createObjectURL(audioBlob);
-      setResult({ text: textToSpeak, audioUrl, audioBlob });
+      
+      const voiceLabel = VoiceLabels[params.voice] || params.voice;
+      const styleLabel = params.contentType;
+
+      setResult({ 
+        text: textToSpeak, 
+        audioUrl, 
+        audioBlob,
+        voiceLabel,
+        styleLabel
+      });
 
       const newItem: HistoryItem = {
         id: Math.random().toString(36).substr(2, 9),

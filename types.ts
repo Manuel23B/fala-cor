@@ -45,6 +45,19 @@ export enum VoiceType {
   Cloned = 'cloned'
 }
 
+export const VoiceLabels: Record<string, string> = {
+  [VoiceType.Charon]: 'Masculina Madura (Charon)',
+  [VoiceType.Fenrir]: 'Masculina Profunda (Fenrir)',
+  [VoiceType.Enceladus]: 'Masculina Robusta (Enceladus)',
+  [VoiceType.Puck]: 'Masculina Juvenil (Puck)',
+  [VoiceType.Orus]: 'Masculina Jovem (Orus)',
+  [VoiceType.Zephyr]: 'Feminina Suave (Zephyr)',
+  [VoiceType.Aoede]: 'Feminina Expressiva (Aoede)',
+  [VoiceType.Leda]: 'Feminina Clara (Leda)',
+  [VoiceType.Kore]: 'Feminina Elegante (Kore)',
+  [VoiceType.Cloned]: 'Voz Personalizada',
+};
+
 export enum Duration {
   Short = 'Curta',
   Medium = 'Média',
@@ -74,6 +87,8 @@ export interface GenerationResponse {
   text: string;
   audioUrl?: string;
   audioBlob?: Blob;
+  voiceLabel: string;
+  styleLabel: string;
 }
 
 export interface HistoryItem {
