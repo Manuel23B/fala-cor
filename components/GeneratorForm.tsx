@@ -1,39 +1,47 @@
 
-import React, { useRef } from 'react';
-import { ContentType, Emotion, VoiceType, Duration, GenerationRequest, GenerationMode, AccentRegion } from '../types';
+import React, { useRef, useState } from 'react';
+import { ContentType, Emotion, VoiceType, Duration, GenerationRequest, GenerationMode, AccentRegion, VoiceLabels } from '../types';
+import { generateSpeech } from '../services/geminiService';
 
 interface GeneratorFormProps {
   onSubmit: (request: GenerationRequest) => void;
   isLoading: boolean;
 }
 
-const maleMatureVoices: Record<string, string> = {
-  [VoiceType.Charon]: 'Masculina Firme e Madura (Charon)',
-  [VoiceType.Fenrir]: 'Masculina Profunda (Fenrir)',
-  [VoiceType.Enceladus]: 'Masculina Robusta (Enceladus)',
-};
-
-const maleYouthVoices: Record<string, string> = {
-  [VoiceType.Puck]: 'Masculina Juvenil e Enérgica (Puck)',
-  [VoiceType.Orus]: 'Masculina Jovem e Suave (Orus)',
+const maleVoices: Record<string, string> = {
+  [VoiceType.Mauro]: 'Mauro (18 anos - High Energy)',
+  [VoiceType.Edmilson]: 'Edmilson (21 anos - Intelectual)',
+  [VoiceType.Helder]: 'Hélder (24 anos - Locutor Jovem)',
+  [VoiceType.Kizua]: 'Kizua (Jovem Urbano)',
+  [VoiceType.Beto]: 'Beto (Natural e Relaxado)',
+  [VoiceType.Ndalu]: 'Ndalu (Sereno e Pausado)',
+  [VoiceType.Puck]: 'Masculina Juvenil (Puck)',
+  [VoiceType.Orus]: 'Masculina Jovem (Orus)',
+  [VoiceType.Charon]: 'Masculina Madura (Charon)',
 };
 
 const femaleVoices: Record<string, string> = {
+  [VoiceType.Lussaty]: 'Lussaty (19 anos - Influencer)',
+  [VoiceType.Edivania]: 'Edivania (22 anos - Moderna)',
+  [VoiceType.Katia]: 'Katia (25 anos - Criativa)',
+  [VoiceType.Nayma]: 'Nayma (Doce e Natural)',
+  [VoiceType.Yola]: 'Yola (Enérgica e Natural)',
+  [VoiceType.Kianda]: 'Kianda (Melódica e Profunda)',
   [VoiceType.Zephyr]: 'Feminina Suave (Zephyr)',
   [VoiceType.Aoede]: 'Feminina Expressiva (Aoede)',
   [VoiceType.Leda]: 'Feminina Clara (Leda)',
-  [VoiceType.Kore]: 'Feminina Elegante (Kore)',
 };
 
 const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, isLoading }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [sampleName, setSampleName] = React.useState<string | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [formData, setFormData] = React.useState<GenerationRequest>({
     mode: GenerationMode.AI,
     manualText: '',
     contentType: ContentType.Narration,
     emotion: Emotion.Emotional,
-    voice: VoiceType.Puck,
+    voice: VoiceType.Mauro,
     accent: AccentRegion.Geral,
     theme: '',
     targetAudience: 'Amigos, Família ou Clientes',
@@ -62,6 +70,34 @@ const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, isLoading }) =>
     }
   };
 
+  const handlePreviewVoice = async () => {
+    if (isPreviewing || formData.voice === VoiceType.Cloned && !formData.voiceSampleBase64) return;
+    
+    setIsPreviewing(true);
+    try {
+      const voiceName = VoiceLabels[formData.voice] || "esta voz";
+      const previewText = `Olá! Eu sou o ${voiceName.split('(')[0].trim()}. Sou uma voz angolana pronta para a tua narração.`;
+      
+      const audioBlob = await generateSpeech(
+        previewText,
+        formData.voice,
+        formData.emotion,
+        formData.accent,
+        formData.contentType,
+        formData.voiceSampleBase64,
+        formData.voiceSampleMimeType
+      );
+      
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+      audio.onended = () => setIsPreviewing(false);
+    } catch (error) {
+      console.error("Erro ao gerar pré-visualização:", error);
+      setIsPreviewing(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
@@ -85,7 +121,7 @@ const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, isLoading }) =>
                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Sincronia Fonética Personalizada</p>
              </div>
           </div>
-          {sampleName && <button type="button" onClick={() => {setSampleName(null); setFormData({...formData, voiceSampleBase64: undefined, voice: VoiceType.Puck})}} className="text-[10px] font-black text-rose-600">LIMPAR</button>}
+          {sampleName && <button type="button" onClick={() => {setSampleName(null); setFormData({...formData, voiceSampleBase64: undefined, voice: VoiceType.Mauro})}} className="text-[10px] font-black text-rose-600">LIMPAR</button>}
         </div>
         {!sampleName ? (
           <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-rose-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-rose-100/50 transition-all">
@@ -130,7 +166,7 @@ const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, isLoading }) =>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">Assunto da Mensagem</label>
             <textarea 
-              placeholder="O que a voz deve transmitir hoje?"
+              placeholder="Sobre o que vamos falar hoje?"
               className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 min-h-[100px] outline-none focus:border-rose-300 transition-all"
               value={formData.theme}
               onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
@@ -157,12 +193,36 @@ const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, isLoading }) =>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Base Vocal</label>
-          <select className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900" value={formData.voice} onChange={(e) => setFormData({...formData, voice: e.target.value as VoiceType})}>
-            <optgroup label="Sintonização Especial"><option value={VoiceType.Cloned}>✨ Usar Referência Personalizada</option></optgroup>
-            <optgroup label="Vozes Masculinas Jovens">{Object.entries(maleYouthVoices).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
-            <optgroup label="Vozes Masculinas Maduras">{Object.entries(maleMatureVoices).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
-            <optgroup label="Vozes Femininas">{Object.entries(femaleVoices).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
+          <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between items-center">
+            <span>Base Vocal</span>
+            <button 
+              type="button" 
+              onClick={handlePreviewVoice}
+              disabled={isPreviewing}
+              className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all ${isPreviewing ? 'text-slate-400' : 'text-rose-600 hover:text-rose-700'}`}
+            >
+              {isPreviewing ? (
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
+                  <div className="w-1 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-1 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828a1 1 0 010-1.415z" clipRule="evenodd" />
+                  </svg>
+                  Pré-ouvir
+                </>
+              )}
+            </button>
+          </label>
+          <select className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 focus:ring-2 focus:ring-rose-500/20 outline-none transition-all" value={formData.voice} onChange={(e) => setFormData({...formData, voice: e.target.value as VoiceType})}>
+            <optgroup label="Especial"><option value={VoiceType.Cloned}>✨ Usar Referência Personalizada</option></optgroup>
+            <optgroup label="Masculinas Juvenis (18-25 anos)">{Object.entries(maleVoices).filter(([k]) => [VoiceType.Mauro, VoiceType.Edmilson, VoiceType.Helder].includes(k as any)).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
+            <optgroup label="Femininas Juvenis (18-25 anos)">{Object.entries(femaleVoices).filter(([k]) => [VoiceType.Lussaty, VoiceType.Edivania, VoiceType.Katia].includes(k as any)).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
+            <optgroup label="Outras Masculinas">{Object.entries(maleVoices).filter(([k]) => ![VoiceType.Mauro, VoiceType.Edmilson, VoiceType.Helder].includes(k as any)).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
+            <optgroup label="Outras Femininas">{Object.entries(femaleVoices).filter(([k]) => ![VoiceType.Lussaty, VoiceType.Edivania, VoiceType.Katia].includes(k as any)).map(([id, l]) => <option key={id} value={id}>{l}</option>)}</optgroup>
           </select>
         </div>
       </div>

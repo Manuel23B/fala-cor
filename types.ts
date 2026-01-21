@@ -42,7 +42,20 @@ export enum VoiceType {
   Leda = 'leda',
   Kore = 'kore',
   Puck = 'puck',
-  Cloned = 'cloned'
+  Cloned = 'cloned',
+  Kizua = 'kizua',
+  Beto = 'beto',
+  Ndalu = 'ndalu',
+  Nayma = 'nayma',
+  Kianda = 'kianda',
+  Yola = 'yola',
+  // Novas vozes juvenis (18-25)
+  Lussaty = 'lussaty',
+  Edivania = 'edivania',
+  Katia = 'katia',
+  Mauro = 'mauro',
+  Edmilson = 'edmilson',
+  Helder = 'helder'
 }
 
 export const VoiceLabels: Record<string, string> = {
@@ -51,10 +64,22 @@ export const VoiceLabels: Record<string, string> = {
   [VoiceType.Enceladus]: 'Masculina Robusta (Enceladus)',
   [VoiceType.Puck]: 'Masculina Juvenil (Puck)',
   [VoiceType.Orus]: 'Masculina Jovem (Orus)',
+  [VoiceType.Kizua]: 'Kizua (Urbano & Rápido)',
+  [VoiceType.Beto]: 'Beto (Natural & Relaxado)',
+  [VoiceType.Ndalu]: 'Ndalu (Sereno & Pausado)',
   [VoiceType.Zephyr]: 'Feminina Suave (Zephyr)',
   [VoiceType.Aoede]: 'Feminina Expressiva (Aoede)',
   [VoiceType.Leda]: 'Feminina Clara (Leda)',
   [VoiceType.Kore]: 'Feminina Elegante (Kore)',
+  [VoiceType.Nayma]: 'Nayma (Doce & Brilhante)',
+  [VoiceType.Kianda]: 'Kianda (Melódica & Profunda)',
+  [VoiceType.Yola]: 'Yola (Energética & Natural)',
+  [VoiceType.Lussaty]: 'Lussaty (19 anos - Vibrante)',
+  [VoiceType.Edivania]: 'Edivania (22 anos - Urbana)',
+  [VoiceType.Katia]: 'Katia (25 anos - Confiante)',
+  [VoiceType.Mauro]: 'Mauro (18 anos - Energia)',
+  [VoiceType.Edmilson]: 'Edmilson (21 anos - Suave)',
+  [VoiceType.Helder]: 'Hélder (24 anos - Carismático)',
   [VoiceType.Cloned]: 'Voz Personalizada',
 };
 

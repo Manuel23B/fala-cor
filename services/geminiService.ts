@@ -55,7 +55,7 @@ export const generateText = async (params: GenerationRequest): Promise<string> =
   promptParts.push({ text: `
       Escreve um roteiro de fala natural e fluente em Português de Angola. 
       REGRA CRÍTICA: O texto deve ser escrito para facilitar a pronúncia angolana. 
-      Evite construções gramaticais típicas de Portugal (ex: uso excessivo de 'estou a fazer' se o contexto pedir algo mais direto ou local). 
+      Evite construções gramaticais típicas de Portugal. 
       Não use gírias brasileiras.
       
       Sotaque Alvo: ${params.accent}
@@ -63,7 +63,7 @@ export const generateText = async (params: GenerationRequest): Promise<string> =
       Assunto: ${params.theme}
       Público: ${params.targetAudience}
 
-      Crie frases que fluam organicamente, com pausas indicadas por vírgulas e reticências onde um angolano naturalmente respiraria ou enfatizaria o 'mambo'.
+      Crie frases que fluam organicamente, com pausas indicadas por vírgulas e reticências onde um angolano naturalmente respiraria ou enfatizaria o 'mambo'. Use termos como 'banda', 'sentir', 'nosso' de forma natural.
     `});
 
   const response = await ai.models.generateContent({
@@ -97,33 +97,65 @@ export const generateSpeech = async (
     }
   }
   
-  let effectiveVoice = voiceType === VoiceType.Cloned ? VoiceType.Charon : voiceType;
-  
-  // Categorização de tom para o prompt
-  const isYouthfulMale = voiceType === VoiceType.Puck || voiceType === VoiceType.Orus;
-  const isDeepMale = voiceType === VoiceType.Charon || voiceType === VoiceType.Fenrir || voiceType === VoiceType.Enceladus;
+  // Mapeamento de Personas para Bases Vocais da API
+  let effectiveVoice: string = voiceType;
+  let vocalPersona = "Locutor Angolano Genérico";
 
-  let vocalCharacter = "Locutor Angolano";
-  if (isYouthfulMale) {
-    vocalCharacter = "Homem Angolano Jovem, com voz leve, ágil e sem gravidade excessiva. O tom deve ser vibrante e juvenil.";
-  } else if (isDeepMale) {
-    vocalCharacter = "Homem Angolano com voz madura, profunda e ressonante.";
-  } else if (voiceType === VoiceType.Zephyr || voiceType === VoiceType.Aoede || voiceType === VoiceType.Leda || voiceType === VoiceType.Kore) {
-    vocalCharacter = "Mulher Angolana com voz clara e expressiva.";
+  // Mapeamento Detalhado
+  if (voiceType === VoiceType.Cloned) {
+    effectiveVoice = 'charon';
+  } else if (voiceType === VoiceType.Kizua) {
+    effectiveVoice = 'puck';
+    vocalPersona = "Homem angolano muito jovem, voz urbana de Luanda, rápida e cheia de 'ginga'.";
+  } else if (voiceType === VoiceType.Beto) {
+    effectiveVoice = 'orus';
+    vocalPersona = "Homem angolano jovem-adulto, voz relaxada, fala como se estivesse a conversar com um amigo na banda.";
+  } else if (voiceType === VoiceType.Ndalu) {
+    effectiveVoice = 'fenrir';
+    vocalPersona = "Homem angolano, voz madura e serena, cadência pausada e profunda.";
+  } else if (voiceType === VoiceType.Nayma) {
+    effectiveVoice = 'zephyr';
+    vocalPersona = "Mulher angolana, voz doce, vogais bem abertas e pronúncia límpida.";
+  } else if (voiceType === VoiceType.Kianda) {
+    effectiveVoice = 'aoede';
+    vocalPersona = "Mulher angolana, voz melódica e expressiva, com cadência que lembra o litoral.";
+  } else if (voiceType === VoiceType.Yola) {
+    effectiveVoice = 'leda';
+    vocalPersona = "Mulher angolana enérgica, voz firme para marketing e motivação, com pausas de impacto.";
+  } 
+  // Novas personas juvenis
+  else if (voiceType === VoiceType.Lussaty) {
+    effectiveVoice = 'zephyr';
+    vocalPersona = "Mulher angolana de 19 anos, voz muito jovem, fresca e vibrante, estilo digital influencer, fala com entusiasmo.";
+  } else if (voiceType === VoiceType.Edivania) {
+    effectiveVoice = 'aoede';
+    vocalPersona = "Mulher angolana de 22 anos, voz moderna e urbana de Luanda, equilibrada e clara, tom de jovem profissional.";
+  } else if (voiceType === VoiceType.Katia) {
+    effectiveVoice = 'leda';
+    vocalPersona = "Mulher angolana de 25 anos, voz confiante e criativa, tom de voz firme mas ainda assim jovem e cativante.";
+  } else if (voiceType === VoiceType.Mauro) {
+    effectiveVoice = 'puck';
+    vocalPersona = "Homem angolano de 18 anos, voz cheia de energia, fala rápido, estilo urbano e descontraído, muita 'vibe'.";
+  } else if (voiceType === VoiceType.Edmilson) {
+    effectiveVoice = 'orus';
+    vocalPersona = "Homem angolano de 21 anos, voz intelectual e suave, tom de voz calmo e pensativo, textura vocal jovem e limpa.";
+  } else if (voiceType === VoiceType.Helder) {
+    effectiveVoice = 'puck';
+    vocalPersona = "Homem angolano de 24 anos, voz carismática de locutor jovem, tom quente e acolhedor, excelente cadência e pausas naturais.";
   }
 
   const foneticaAngolana = `
-    DIRETRIZES FONÉTICAS OBRIGATÓRIAS (ELIMINAÇÃO DE ERROS):
-    1. NÃO use o sotaque de Portugal: Não feche as vogais excessivamente. O 'e' e o 'o' devem ter o brilho angolano.
-    2. NÃO use o sotaque do Brasil: O 'L' no final das palavras deve ser DENTAL (L real), nunca vocalizado como 'U'.
-    3. CADÊNCIA: Use o ritmo cadenciado de ${accent}. A fala deve ser melódica, mas firme.
-    4. IDENTIDADE: A voz deve ser ${vocalCharacter}. Se for jovem, mantenha o tom leve e a energia de um rapaz da banda.
-    5. NATURALIDADE: Introduza as pausas de respiração típicas de quem está a conversar, não de quem está a ler.
+    INSTRUÇÕES FONÉTICAS DE ALTA FIDELIDADE:
+    1. RESPIRAÇÃO NATURAL: Insira pausas de respiração audíveis após vírgulas e pontos. A fala não deve ser contínua como um robô.
+    2. ELIMINAÇÃO DE PT-PT: Proibido fechar o 'e' e o 'o' como em Lisboa. Use o brilho vocálico de Luanda.
+    3. ELIMINAÇÃO DE PT-BR: O 'L' no final de palavras deve ser DENTAL (L real), nunca vocalizado como 'U'.
+    4. RITMO: Siga a cadência de ${accent}. Se for Luanda, seja mais ágil. Se for Huambo, seja mais pausado.
+    5. PERSONA: Você é ${vocalPersona}. Fale com alma, não apenas leia.
   `;
 
   const cloningInstruction = voiceType === VoiceType.Cloned && voiceProfile 
     ? `MODO CLONE REAL: Use esta identidade vocal: ${voiceProfile}. Replique a alma angolana do locutor original.`
-    : `REFERÊNCIA DE VOZ: Use uma tonalidade angolana rica e expressiva.`;
+    : `REFERÊNCIA DE VOZ: Use uma tonalidade angolana rica.`;
 
   const speechPrompt = `
     ${foneticaAngolana}
@@ -133,9 +165,7 @@ export const generateSpeech = async (
     - Estilo: ${contentType}
     - ${cloningInstruction}
     
-    A tua missão é dar vida ao texto como se fosses um angolano nativo a falar com o coração. Sem vestígios artificiais.
-    
-    TEXTO: "${text}"
+    TEXTO PARA NARRAR: "${text}"
   `;
 
   const response = await ai.models.generateContent({
@@ -145,7 +175,7 @@ export const generateSpeech = async (
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: effectiveVoice },
+          prebuiltVoiceConfig: { voiceName: effectiveVoice as any },
         },
       },
     },

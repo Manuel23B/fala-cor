@@ -170,6 +170,23 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onRegenerate }) =
       {/* Ações Pós-Audição */}
       <div className="flex flex-wrap gap-4">
         <button 
+          onClick={togglePlay}
+          className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-5 rounded-[1.5rem] font-black transition-all shadow-sm active:scale-95 ${isPlaying ? 'bg-slate-900 text-white shadow-slate-900/20' : 'bg-rose-50 text-rose-600 border-2 border-rose-100 hover:bg-rose-100'}`}
+        >
+          {isPlaying ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+              PAUSAR
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              OUVIR
+            </>
+          )}
+        </button>
+
+        <button 
           onClick={handleDownload}
           className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-100 rounded-[1.5rem] font-black transition-all shadow-sm hover:border-rose-200 active:scale-95"
         >
@@ -178,6 +195,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onRegenerate }) =
           </svg>
           GUARDAR ÁUDIO
         </button>
+
         <button 
           onClick={onRegenerate}
           className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-rose-600 hover:bg-rose-700 text-white rounded-[1.5rem] font-black transition-all shadow-xl shadow-rose-600/30 active:scale-95"
