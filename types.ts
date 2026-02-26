@@ -4,6 +4,7 @@ export enum Emotion {
   Motivational = 'Motivational',
   Confident = 'Confident',
   Romantic = 'Romantic',
+  LoveDeclaration = 'Declaração de Amor',
   Inspirational = 'Inspirational',
   LightCrying = 'Light Crying',
   Joy = 'Joy',
@@ -49,7 +50,6 @@ export enum VoiceType {
   Nayma = 'nayma',
   Kianda = 'kianda',
   Yola = 'yola',
-  // Novas vozes juvenis (18-25)
   Lussaty = 'lussaty',
   Edivania = 'edivania',
   Katia = 'katia',
@@ -94,6 +94,14 @@ export enum GenerationMode {
   Manual = 'Manual'
 }
 
+export enum ToneIntensity {
+  Normal = 'Normal',
+  Soft = 'Suave',
+  Deep = 'Profundo',
+  HighPitch = 'Agudo',
+  Whisper = 'Sussurro'
+}
+
 export interface GenerationRequest {
   mode: GenerationMode;
   manualText?: string;
@@ -101,6 +109,7 @@ export interface GenerationRequest {
   emotion: Emotion;
   voice: VoiceType;
   accent: AccentRegion;
+  toneIntensity: ToneIntensity;
   theme: string;
   targetAudience: string;
   duration: Duration;
@@ -114,6 +123,7 @@ export interface GenerationResponse {
   audioBlob?: Blob;
   voiceLabel: string;
   styleLabel: string;
+  toneLabel: string;
 }
 
 export interface HistoryItem {
@@ -123,4 +133,6 @@ export interface HistoryItem {
   voice: VoiceType;
   emotion: Emotion;
   contentType: ContentType;
+  accent: AccentRegion;
+  toneIntensity: ToneIntensity;
 }

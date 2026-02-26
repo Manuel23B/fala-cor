@@ -1,11 +1,9 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
-import { GenerationRequest, VoiceType, ContentType, AccentRegion } from "../types";
-
-const API_KEY = process.env.API_KEY || "";
+import { GenerationRequest, VoiceType, ContentType, AccentRegion, Emotion, ToneIntensity } from "../types.ts";
 
 const getGeminiClient = () => {
-  return new GoogleGenAI({ apiKey: API_KEY });
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 function decodeBase64(base64: string) {
@@ -52,25 +50,50 @@ export const generateText = async (params: GenerationRequest): Promise<string> =
     });
   }
 
-  promptParts.push({ text: `
-      Escreve um roteiro de fala natural e fluente em Português de Angola. 
-      REGRA CRÍTICA: O texto deve ser escrito para facilitar a pronúncia angolana. 
-      Evite construções gramaticais típicas de Portugal. 
-      Não use gírias brasileiras.
-      
-      Sotaque Alvo: ${params.accent}
-      Emoção: ${params.emotion}
-      Assunto: ${params.theme}
-      Público: ${params.targetAudience}
+  const getEmotionInstructions = (emotion: Emotion) => {
+    switch (emotion) {
+      case Emotion.LoveDeclaration:
+        return "O tom é de uma declaração de amor profunda. Escreva como alguém que está a falar baixinho ao ouvido, com frases curtas, pausas emocionais (use ...) e termos afetuosos como 'meu mambo', 'minha vida', 'estou a sentir'. O ritmo deve ser melódico.";
+      case Emotion.Joy:
+        return "O tom é de pura alegria e entusiasmo. Use frases exclamativas, ritmo rápido e palavras vibrantes. A energia deve ser contagiante.";
+      case Emotion.Sadness:
+        return "O tom é melancólico e pesado. Use frases mais longas e lentas, com pausas de suspiro. A voz deve soar carregada de emoção contida.";
+      case Emotion.LightCrying:
+        return "O tom é de choro leve, voz embargada. Use interrupções no meio das palavras, respirações ofegantes e frases que parecem falhar.";
+      case Emotion.Confident:
+        return "O tom é firme, seguro e autoritário. Use frases diretas, sem hesitação, com ênfase clara nas palavras-chave.";
+      case Emotion.Motivational:
+        return "O tom é inspirador e crescente. Comece calmo e vá aumentando a intensidade e a paixão ao longo do texto.";
+      default:
+        return `O tom deve ser ${emotion}. Ajuste o vocabulário e o ritmo para refletir este estado emocional de forma natural.`;
+    }
+  };
 
-      Crie frases que fluam organicamente, com pausas indicadas por vírgulas e reticências onde um angolano naturalmente respiraria ou enfatizaria o 'mambo'. Use termos como 'banda', 'sentir', 'nosso' de forma natural.
+  const emotionInstructions = getEmotionInstructions(params.emotion);
+
+  promptParts.push({ text: `
+      Escreve um roteiro de fala ORGÂNICA em Português de Angola. 
+      NÃO escreva como um livro. Escreva como um angolano FALANDO em voz alta.
+      
+      REGRAS DE NATURALIDADE:
+      1. Use repetições leves ou interjeições naturais (ex: 'olha só', 'então', 'sabes?', 'pá', 'mambo').
+      2. Estruture as frases para que a voz suba e desça de tom naturalmente (entonação angolana).
+      3. Use pontuação (vírgulas, reticências, pontos de exclamação) para forçar pausas de pensamento e variações de tom.
+      
+      Sotaque: ${params.accent}
+      Emoção: ${params.emotion}
+      Contexto: ${params.theme}
+      
+      ${emotionInstructions}
+
+      Gere apenas o texto da fala, sem instruções entre parênteses ou metadados.
     `});
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: { parts: promptParts },
     config: {
-      temperature: 0.85,
+      temperature: 0.9,
     },
   });
 
@@ -82,6 +105,7 @@ export const generateSpeech = async (
   voiceType: VoiceType, 
   emotion: string, 
   accent: AccentRegion,
+  toneIntensity: ToneIntensity = ToneIntensity.Normal,
   contentType?: ContentType,
   voiceSampleBase64?: string,
   voiceSampleMimeType?: string
@@ -93,79 +117,70 @@ export const generateSpeech = async (
     try {
       voiceProfile = await analyzeVoiceSample(voiceSampleBase64, voiceSampleMimeType || "audio/mpeg");
     } catch (e) {
-      console.warn("Análise falhou.");
+      console.warn("Análise de voz falhou, procedendo com voz padrão.");
     }
   }
   
-  // Mapeamento de Personas para Bases Vocais da API
-  let effectiveVoice: string = voiceType;
-  let vocalPersona = "Locutor Angolano Genérico";
+  // Mapeamento rigoroso para vozes suportadas: Charon, Puck, Kore, Fenrir, Zephyr
+  let effectiveVoice = 'Charon';
+  let vocalPersona = "Locutor Angolano";
 
-  // Mapeamento Detalhado
-  if (voiceType === VoiceType.Cloned) {
-    effectiveVoice = 'charon';
-  } else if (voiceType === VoiceType.Kizua) {
-    effectiveVoice = 'puck';
-    vocalPersona = "Homem angolano muito jovem, voz urbana de Luanda, rápida e cheia de 'ginga'.";
-  } else if (voiceType === VoiceType.Beto) {
-    effectiveVoice = 'orus';
-    vocalPersona = "Homem angolano jovem-adulto, voz relaxada, fala como se estivesse a conversar com um amigo na banda.";
-  } else if (voiceType === VoiceType.Ndalu) {
-    effectiveVoice = 'fenrir';
-    vocalPersona = "Homem angolano, voz madura e serena, cadência pausada e profunda.";
-  } else if (voiceType === VoiceType.Nayma) {
-    effectiveVoice = 'zephyr';
-    vocalPersona = "Mulher angolana, voz doce, vogais bem abertas e pronúncia límpida.";
-  } else if (voiceType === VoiceType.Kianda) {
-    effectiveVoice = 'aoede';
-    vocalPersona = "Mulher angolana, voz melódica e expressiva, com cadência que lembra o litoral.";
-  } else if (voiceType === VoiceType.Yola) {
-    effectiveVoice = 'leda';
-    vocalPersona = "Mulher angolana enérgica, voz firme para marketing e motivação, com pausas de impacto.";
-  } 
-  // Novas personas juvenis
-  else if (voiceType === VoiceType.Lussaty) {
-    effectiveVoice = 'zephyr';
-    vocalPersona = "Mulher angolana de 19 anos, voz muito jovem, fresca e vibrante, estilo digital influencer, fala com entusiasmo.";
-  } else if (voiceType === VoiceType.Edivania) {
-    effectiveVoice = 'aoede';
-    vocalPersona = "Mulher angolana de 22 anos, voz moderna e urbana de Luanda, equilibrada e clara, tom de jovem profissional.";
-  } else if (voiceType === VoiceType.Katia) {
-    effectiveVoice = 'leda';
-    vocalPersona = "Mulher angolana de 25 anos, voz confiante e criativa, tom de voz firme mas ainda assim jovem e cativante.";
-  } else if (voiceType === VoiceType.Mauro) {
-    effectiveVoice = 'puck';
-    vocalPersona = "Homem angolano de 18 anos, voz cheia de energia, fala rápido, estilo urbano e descontraído, muita 'vibe'.";
-  } else if (voiceType === VoiceType.Edmilson) {
-    effectiveVoice = 'orus';
-    vocalPersona = "Homem angolano de 21 anos, voz intelectual e suave, tom de voz calmo e pensativo, textura vocal jovem e limpa.";
-  } else if (voiceType === VoiceType.Helder) {
-    effectiveVoice = 'puck';
-    vocalPersona = "Homem angolano de 24 anos, voz carismática de locutor jovem, tom quente e acolhedor, excelente cadência e pausas naturais.";
+  switch(voiceType) {
+    case VoiceType.Kizua:
+    case VoiceType.Mauro:
+    case VoiceType.Helder:
+    case VoiceType.Puck:
+      effectiveVoice = 'Puck';
+      vocalPersona = "Jovem, tom urbano e vibrante.";
+      break;
+    case VoiceType.Beto:
+    case VoiceType.Edmilson:
+    case VoiceType.Orus:
+    case VoiceType.Charon:
+    case VoiceType.Cloned:
+      effectiveVoice = 'Charon';
+      vocalPersona = "Homem maduro, voz equilibrada e natural.";
+      break;
+    case VoiceType.Ndalu:
+    case VoiceType.Enceladus:
+    case VoiceType.Fenrir:
+      effectiveVoice = 'Fenrir';
+      vocalPersona = "Voz profunda, grave e autoritária.";
+      break;
+    case VoiceType.Nayma:
+    case VoiceType.Lussaty:
+    case VoiceType.Zephyr:
+      effectiveVoice = 'Zephyr';
+      vocalPersona = "Feminina, tom doce, jovem e suave.";
+      break;
+    case VoiceType.Kianda:
+    case VoiceType.Aoede:
+    case VoiceType.Kore:
+      effectiveVoice = 'Kore';
+      vocalPersona = "Feminina, elegante, expressiva e profunda.";
+      break;
+    case VoiceType.Yola:
+    case VoiceType.Leda:
+    case VoiceType.Katia:
+    case VoiceType.Edivania:
+      effectiveVoice = 'Kore'; // Fallback para vozes femininas enérgicas
+      vocalPersona = "Feminina, confiante e clara.";
+      break;
+    default:
+      effectiveVoice = 'Charon';
   }
 
-  const foneticaAngolana = `
-    INSTRUÇÕES FONÉTICAS DE ALTA FIDELIDADE:
-    1. RESPIRAÇÃO NATURAL: Insira pausas de respiração audíveis após vírgulas e pontos. A fala não deve ser contínua como um robô.
-    2. ELIMINAÇÃO DE PT-PT: Proibido fechar o 'e' e o 'o' como em Lisboa. Use o brilho vocálico de Luanda.
-    3. ELIMINAÇÃO DE PT-BR: O 'L' no final de palavras deve ser DENTAL (L real), nunca vocalizado como 'U'.
-    4. RITMO: Siga a cadência de ${accent}. Se for Luanda, seja mais ágil. Se for Huambo, seja mais pausado.
-    5. PERSONA: Você é ${vocalPersona}. Fale com alma, não apenas leia.
-  `;
-
-  const cloningInstruction = voiceType === VoiceType.Cloned && voiceProfile 
-    ? `MODO CLONE REAL: Use esta identidade vocal: ${voiceProfile}. Replique a alma angolana do locutor original.`
-    : `REFERÊNCIA DE VOZ: Use uma tonalidade angolana rica.`;
-
   const speechPrompt = `
-    ${foneticaAngolana}
+    DIRETRIZ DE PERFORMANCE HUMANA ANGOLANA (ALTA FIDELIDADE):
+    1. PROSÓDIA E TOM: Evite a monotonia. Varie o tom (pitch) e a velocidade de forma dinâmica conforme a emoção (${emotion}). 
+    2. INTENSIDADE VOCAL: O tom deve ser ${toneIntensity}. Ajuste a pressão subglótica e a ressonância para este estilo.
+    3. ENTONAÇÃO: Use uma curvatura melódica natural de Angola. Acentue as sílabas tônicas com variações sutis de frequência.
+    4. RESPIRAÇÃO E PAUSAS: Inclua micro-pausas e respirações orgânicas entre as frases para realismo máximo.
+    5. SOTAQUE ${accent.toUpperCase()}: Aplique a fonética regional específica, focando na abertura das vogais e na cadência rítmica.
+    6. IDENTIDADE VOCAL: ${vocalPersona}
+    ${voiceProfile ? `REFERÊNCIA DE DNA VOCAL: ${voiceProfile}` : ''}
     
-    PERFORMANCE:
-    - Emoção: ${emotion}
-    - Estilo: ${contentType}
-    - ${cloningInstruction}
-    
-    TEXTO PARA NARRAR: "${text}"
+    TEXTO PARA NARRAÇÃO: "${text}"
   `;
 
   const response = await ai.models.generateContent({
@@ -182,7 +197,7 @@ export const generateSpeech = async (
   });
 
   const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) throw new Error("Erro na síntese.");
+  if (!base64Audio) throw new Error("A API não retornou dados de áudio.");
 
   return createWavBlob(decodeBase64(base64Audio), 24000);
 };
@@ -190,18 +205,18 @@ export const generateSpeech = async (
 function createWavBlob(pcmData: Uint8Array, sampleRate: number): Blob {
   const header = new ArrayBuffer(44);
   const view = new DataView(header);
-  view.setUint32(0, 0x52494646, false);
+  view.setUint32(0, 0x52494646, false); // RIFF
   view.setUint32(4, 36 + pcmData.length, true);
-  view.setUint32(8, 0x57415645, false);
-  view.setUint32(12, 0x666d7420, false);
+  view.setUint32(8, 0x57415645, false); // WAVE
+  view.setUint32(12, 0x666d7420, false); // fmt 
   view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // Mono
   view.setUint32(24, sampleRate, true);
   view.setUint32(28, sampleRate * 2, true);
   view.setUint16(32, 2, true);
   view.setUint16(34, 16, true);
-  view.setUint32(36, 0x64617461, false);
+  view.setUint32(36, 0x64617461, false); // data
   view.setUint32(40, pcmData.length, true);
   return new Blob([header, pcmData], { type: 'audio/wav' });
 }
